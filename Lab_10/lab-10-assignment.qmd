@@ -1,0 +1,195 @@
+---
+title: "Lab-10: Assignment"
+author: "Dr. Purna Gamage"
+format:
+  html:
+    embed-resources: true
+---
+
+
+## Problem 1: 
+
+Import the data from Flight Delays into R. Although the data are on all UA and AA flights flown in May and June of 2009, we will assume these represent a sample from a larger population of UA and AA flights flown under similar circumstances. We will consider the ratio of means of the flight delay lengths, $\mu UA/ \mu AA$.
+
+
+```{r}
+library(ISLR2)
+library(boot)
+library(ggplot2)
+```
+
+(a)  Perform some exploratory data analysis(EDA) on flight delay lengths for each of UA and AA flights(look at some plots). Comment on your results.
+```{r}
+Flight <- read.csv('FlightDelays.csv')
+
+head(Flight)
+FlightDelay_UA <- Flight$Delay[Flight$Carrier == 'UA']
+FlightDelay_AA <- Flight$Delay[Flight$Carrier == 'AA']
+
+hist(FlightDelay_UA)
+hist(FlightDelay_AA)
+
+length(FlightDelay_UA)
+length(FlightDelay_AA)
+```
+```{r}
+summary(FlightDelay_UA)
+summary(FlightDelay_AA)
+```
+
+The mean of UA is 15.98 and that of AA is 10.1. Both plots are skewed to the left 
+
+(b) Bootstrap the mean of flight delay lengths for each airline separately and plot and describe the distribution.
+```{r}
+# UA
+n <- length(FlightDelay_UA)
+N <- 10000
+
+flightdelay_ua.mean <- numeric(N) 
+flightdelay_aa.mean <- numeric(N) 
+
+for (i in 1:N)
+{
+  x <- sample(FlightDelay_UA, n, replace = TRUE)
+  flightdelay_ua.mean[i] <- mean(x) #bootstrap sample mean
+  
+  y <- sample(FlightDelay_AA, n, replace = TRUE)
+  flightdelay_aa.mean[i] <- mean(y) #bootstrap sample mean
+}
+
+hist(flightdelay_ua.mean, main = "Bootstrap distribution of means",col = '#E5CCFF') 
+abline(v = mean(FlightDelay_UA), col = "red", lty = 2) # observed mean 
+
+hist(flightdelay_aa.mean, main = "Bootstrap distribution of means",col = '#E5CCFF') 
+abline(v = mean(FlightDelay_AA), col = "red", lty = 2) # observed mean 
+```
+
+Both bootstrap distribution is similar to normal distribution, and the means are also similar to the actual means. 
+
+
+(c) Bootstrap the ratio of means. Provide plots of the bootstrap distribution and describe the distribution.
+```{r}
+hist(flightdelay_ua.mean/flightdelay_aa.mean)
+```
+The graph is a little skewed, but the overall plot is similar to normal distribution.
+
+(d) Find the 95% bootstrap percentile interval for the ratio of means. Interpret this interval.
+```{r}
+quantile(flightdelay_ua.mean/flightdelay_aa.mean, c(0.025, 0.975))
+```
+```{r}
+hist(flightdelay_ua.mean/flightdelay_aa.mean)
+abline(v = quantile(flightdelay_ua.mean/flightdelay_aa.mean, c(0.025, 0.975)), col = "red")
+```
+The plot is a little skewed to the left, but we can say that the true ratio of means is between 1.19 and 2.11 with 95% of confidence. 
+
+(e) What is the bootstrap estimate of the bias for the mean ratio?
+
+```{r}
+mean(flightdelay_ua.mean/flightdelay_aa.mean) - mean(FlightDelay_UA)/mean(FlightDelay_AA)
+```
+The bias for the mean ratio is around 0.018.
+
+
+## Problem 2: Hypothesis testing using bootstrap approach.
+(Chihara2011)
+
+Import the data set Titanic.csv which contains survival data (0 = death, 1 = survival) and ages of 658 passengers of the Titanic which sank on April 15, 1912 (the day when Americans had to file income tax returns for the first time). Examine the null hypothesis that the mean ages of survivors and of victims are the same against the alternative that these mean ages are different, using a bootstrap approach.
+
+```{r}
+Titanic = read.csv("Titanic.csv",stringsAsFactors=FALSE)
+head(Titanic)
+```
+
+Let's make a hypothesis. Are two population means different?
+
+Null Hypothesis: Mean ages of survivors and of victims are the same. (That means that there is no difference between the two population means)
+
+Let's use the bootstrap approach.
+
+a. First let's seperate the two samples "survivors(=1)" and "victims(=0)".
+```{r}
+titanic.survived <- Titanic$Age[Titanic$Survived == 1]
+titanic.victims <- Titanic$Age[Titanic$Survived == 0]
+```
+
+b. Make many bootstrap samples(100000) of difference of sample means. 
+```{r}
+z.1 <- rep(NA,100000)
+
+for (j in 1:100000){
+  boot.survived <- mean(sample(titanic.survived, length(titanic.survived), replace = T))
+  boot.victims <- mean(sample(titanic.victims, length(titanic.victims), replace = T))
+  z.1[j] <- boot.survived - boot.victims #the difference
+}
+
+mean(z.1) #bootstrap mean difference
+
+mydiff = function(mydf){
+  index = mydf$Survived == 1
+  return(mean(mydf$Age[index]) - mean(mydf$Age[!index]))
+}
+
+mydiff(Titanic) #actual mean difference from the original sample
+```
+```{r}
+hist(z.1, breaks = 40, prob = T, main = "Histogram of bootstrap sample means",col = '#99FF99')
+abline(v = mydiff(Titanic), col = 2, lwd = 2)
+```
+
+
+c. Make a 90% percentile  bootstrap confidence interval for the difference estimate. Using this CI, conclude on your hypothesis. 
+
+Null Hypothesis: Mean ages of survivors and of victims are the same. (That means that there is no difference between the two population means)
+```{r}
+ci.1 <- quantile(z.1, c(.05, .95))
+ci.1 #null value is not inside the confidence interval = reject the null hyp.
+```
+
+
+d. Make a 95% percentile bootstrap confidence interval for the difference estimate and using this CI, conclude on your hypothesis. 
+```{r}
+ci.1 <- quantile(z.1, c(.025, .975))
+ci.1 #null value is not inside the confidence interval = reject the null hyp.
+```
+
+Null Hypothesis: Mean ages of survivors and of victims are the same. (That means that there is no difference between the two population means)
+
+## Problem 3 (Optional)
+
+`Optional`: Don't need to submit
+
+Load the Bangladesh data. We made inference about Arsenic in water in the Lab 9. Let's make inference about Cobalt.
+
+```
+bdesh <- read.csv("Bangladesh.csv")
+head(bdesh)
+```
+
+a. Plot the boxplot of Cobalt. What's look wrong? Do you think a transformation can explain the data better?
+
+
+b. Make a log transformation of the data (Cobalt) and plot the boxplot. What do you see differently? Comment.
+
+
+c. Are there an missing values? If so, remove the missing values and draw bootstrap samples(10000) of sample mean. (remeber we are still using the log transformation)
+
+
+d. What is the bias?
+
+
+e. Find the standard error of the bootstrap estimate. 
+
+Also, calculate the estimate(using the bootstrap sample) of mean squared error(MSE) =var(X)+ (bias)^2
+
+Comment on your results.
+
+f. Make a 95% Percentile Bootstrap CI for mean of log transformed(log10) Cobalt data.  Comment on your results.
+
+g. Repeat the bootstrap sampling process to estimate the median of the actual data(Cobalt- no transformation). 
+
+h. Find the bias and the standard error of the bootstrap estimate. Comment on your results. 
+
+
+
+

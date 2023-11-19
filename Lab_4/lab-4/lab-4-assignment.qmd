@@ -1,0 +1,200 @@
+---
+title: "Lab-4: Assignment"
+author: "Dr. Purna Gamage"
+
+format: 
+  html: 
+    embed-resources: true
+---
+
+## Problem 1:
+
+Use simulation to answer the following questions.
+
+Given independent uniform random variables $X_1 \sim U(a, b)$ and $X_2 \sim U(a,b)$. (You can use parameters of your choice)
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+# library(plotly)
+```
+
+a. Is the distribution of $X_1 +X_2$ uniform? Please Justify your answer.
+```{r}
+lower <- 0  
+upper <- 1 
+
+samples <- 1000
+
+x1 <- runif(samples, min = lower, max = upper)
+x2 <- runif(samples, min = lower, max = upper)
+
+sums <- x1 + x2
+
+hist(sums, breaks = 50, prob = TRUE, main = "Distribution of X1 + X2")
+```
+
+b. Is the distribution of $X_1.X_2$ uniform? Please Justify your answer.
+```{r}
+lower <- 0  
+upper <- 1 
+
+samples <- 1000
+
+x1 <- runif(samples, min = lower, max = upper)
+x2 <- runif(samples, min = lower, max = upper)
+
+sums <- x1 * x2
+
+hist(sums, breaks = 50, prob = TRUE, main = "Distribution of X1 * X2")
+```
+
+c. Is the distribution of $max(X_1, X_2)$ or $min(X_1, X_2)$ uniform? Please Justify your answer.
+```{r}
+lower <- 0
+upper <- 1
+
+samples <- 1000
+
+max_values <- numeric(samples)
+min_values <- numeric(samples)
+
+for (i in 1:samples) { # simulation
+  x1 <- runif(1, min = lower, max = upper)
+  x2 <- runif(1, min = lower, max = upper)
+
+  max_values[i] <- max(x1, x2)
+  min_values[i] <- min(x1, x2)
+}
+# create a plot
+par(mfrow = c(1, 2))
+
+# MAX
+hist(max_values, breaks = 50, prob = TRUE, main = "Distribution of max(X1, X2)")
+# MIN
+hist(min_values, breaks = 50, prob = TRUE, main = "Distribution of min(X1, X2)")
+```
+
+d. Is the distribution of $1-X_1$ uniform? Please Justify your answer.
+```{r}
+lower <- 0  
+upper <- 1  
+
+samples <- 1000
+
+result <- numeric(samples)
+
+for (i in 1:samples) { # simulation
+  x1 <- runif(1, min = lower, max = upper)
+  result[i] <- 1 - x1
+}
+
+hist(result, breaks = 50, prob = TRUE, main = "Distribution of 1 - X1")
+```
+
+
+## Problem 2:
+
+Validate the following theorems using simulation. (You can use parameters of your choice)
+
+`optional`: In addition to the simulation, you can also prove these theorems analytically, i.e. with pen and paper, if you want.
+
+a. Linear Transformations 
+
+
+**Theorem-5.6.4:** If $X$ has the normal distribution with mean $\mu$ and variance $\sigma^2$ and if $Y=a X+b$, 5.6.4 where $a$ and $b$ are given constants and $a \neq 0$, then $Y$ has the normal distribution with mean $a \mu+b$ and variance $a^2 \sigma^2$.
+
+```{r}
+mu <- 10
+sigma <- 2  
+a <- 3
+b <- 5
+
+sim <- 1000
+
+Y_sim <- numeric(sim)
+
+for (i in 1:sim) {
+  z <- rnorm(1, mean = 0, sd = 1) # normalization
+  Y <- a * (mu + sigma * z) + b
+  Y_sim[i] <- Y
+}
+
+Y_mean <- mean(Y_sim)
+Y_var <- var(Y_sim)
+Y_mean
+Y_var
+
+Y_real_mean <- a * mu + b
+Y_real_var <- a^2 * sigma^2
+Y_real_mean
+Y_real_var
+```
+
+b. Linear Combinations of Normally Distributed Variables
+
+**Theorem-5.6.7:**  If the random variables $X_1, \ldots, X_k$ are independent and if $X_i$ has the normal distribution with mean $\mu_i$ and variance $\sigma_i^2(i=1, \ldots, k)$, then the sum $X_1+\cdots+X_k$ has the normal distribution with mean $\mu_1+\cdots+\mu_k$ and variance $\sigma_1^2+\cdots+\sigma_k^2$.
+
+```{r}
+ind_vars <- 5  
+sim <- 1000
+
+mu <- c(10, 15, 20, 25, 30)
+sigma <- c(4, 9, 16, 25, 36)
+
+sums <- numeric(sim)
+
+for (i in 1:sim) {
+  X_values <- rnorm(ind_vars, mean = mu, sd = sqrt(sigma))
+  sum_X <- sum(X_values)
+  sums[i] <- sum_X
+}
+
+sim_mean <- mean(sums)
+sim_var <- var(sums)
+
+sim_mean
+sim_var
+
+real_mean <- sum(mu)
+real_var <- sum(sigma)
+real_mean
+real_var
+```
+
+## Problem 3: 
+
+Use the iris data set to check the normality of Sepal width of setosa using the following normality tests (Repeat the steps  in the example 3 in lab 4, comment  on your results)
+
+a. Anderson Darling Test
+```{r}
+library(nortest)
+data(iris)
+setosa_data <- iris[iris$Species == "setosa", ]
+result <- ad.test(setosa_data$Sepal.Width)
+print(result)
+```
+
+b. Kolmogorov-Smirnov Test (Comapre to a standard normal distribution)
+```{r}
+data(iris)
+setosa_data <- iris[iris$Species == "setosa", ]
+result <- ks.test(setosa_data$Sepal.Width, "pnorm", mean = mean(setosa_data$Sepal.Width), sd = sd(setosa_data$Sepal.Width))
+print(result)
+```
+
+
+## Problem 4: (optional)
+
+`Exponential Distribution`
+
+Given exponentially distributed random variables $X_1, . . . , X_k$ . Think of waiting times for independent random alarm clocks $1,...,k$ to go off.
+
+Which of these are again exponentially distributed? Explore with a simulation.
+(Hint: you can use many methods here to compare the distributions, for example; using Kolmogorov-Smirnov Test, plotting cdfs or ecdfs(as we did in lab 3),..etc )
+
+a. Distribution of $min(X_1,\dots,X_k)$? Waiting time for the first alarm to go off.
+
+b. Distribution of $max(X_1, \dots, X_k )$? Waiting time for the last alarm to go off.
+
+c. Distribution of $X_1 + \dots + X_k$ ? Waiting time until Start of the next clock when the previous alarm/s has gone off.

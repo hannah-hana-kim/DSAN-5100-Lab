@@ -1,0 +1,182 @@
+---
+title: "Lab-2 Assignment"
+author: "Dr. Purna Gamage"
+format: 
+  html:
+    embed-resources: true 
+---
+
+## Problem 1: This question refers to Example 2 and 3 in Lab 2 demo:
+
+You will first need to import the `gtools` library --> `library(gtools)`
+```{r}
+# install.packages(gtools)
+# install.packages("gtools", repos="https://cran.rstudio.com/")
+# embed-resources: true - save the style
+library(gtools)
+```
+
+i. What is the difference  between `%in%` and `==`?
+'%in%' compares if the element in the first value matches all the elements in the second value.
+{e.g., 
+  x <- c('a', 'b', 'c')
+  y <- c('c', 'b', 'a') 
+  x %in% y
+the last line will return "TRUE" "TRUE" "TRUE", since the elements in x is contained in y. }
+
+'==' is a logical operator which compares if two elements, whether they are numerical, text/string, None or binary type, are identical or not. 
+{e.g., 
+   x <- c('a', 'b', 'c')
+   y <- c('c', 'b', 'a')
+   x == y 
+the last line will return: "FALSE" "TRUE" "FALSE". It basically checking the both elements are identical to each other. }
+
+ii. Try to find the _probabilities_  for the below questions with a different set of coding without using %in%. 
+
+a. Let's use the deck of cards generated in Example 2 and please answer the following questions below with a different set of coding without using `%in%`. 
+
+  (i). Probability of drawing a Queen as the first card?
+```{r}
+suits <- c("Diamonds", "Clubs", "Heart", "Spades")
+numbers <- c("Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King")
+(deck <- expand.grid(number=numbers, suit=suits))
+(deck <- paste(deck$number, deck$suit)) # make the data frame to the vector
+```
+
+```{r}
+(queens <- paste("Queen", suits))
+head(queens)
+head(deck)
+
+# R - vector == Python - list
+
+result = 0
+
+for (i in deck) {
+  if (any(queens == i)) {
+    result = result + 1
+  }
+}
+result/length(deck)
+a <- result/length(deck)
+```
+  
+  (ii). Conditional probability of the second card being a Queen given that the first card was a Queen?
+
+Conditional Probability: Pr(second_card=="Queen" && first_card=="Queen" | first_card=="Queen")
+```{r}
+hands <- permutations(52, 2, v = deck)
+head(hands)
+nrow(hands)
+
+first_card <- hands[,1]
+second_card <- hands[,2]
+
+(queens <- paste("Queen", suits))
+
+head(first_card)
+head(second_card)
+head(queens)
+```
+
+
+```{r}
+result_1 = 0
+#head(hands)
+#head(queens)
+#head(first_card)
+
+for (i in 1:nrow(hands)) { # i is number (index)
+    if (any(queens == first_card[i])) {
+      if (any(queens == second_card[i])) {
+          result_1 = result_1 + 1
+      }
+    }
+}
+(result_1/length(first_card))/a
+
+```
+
+
+b. Refer to Example 3: Compute the Probability of a Natural 21 in Blackjack with a different set of coding without using `%in%`. 
+
+```{r}
+(aces <- paste("Ace", suits))
+
+facecard <- c("King", "Queen", "Jack", "Ten")
+(facecard <- expand.grid(number = facecard, suit = suits))
+facecard <- paste(facecard$number, facecard$suit)
+
+hands <- combinations(52, 2, v = deck)
+
+first_card <- hands[,1]
+second_card <- hands[,2]
+
+result_2 = 0
+
+for (i in 1:nrow(hands)) {
+  if (any(aces== first_card[i])) {
+    if (any(facecard == second_card[i])) { 
+      result_2 = result_2 + 1
+    }
+  }
+}
+result_2 / nrow(hands)
+
+```
+
+## Problem 2:
+
+(This is fictional) It is believed that for COVID-19 a highly sensitive test has a low false-negative rate. A highly specific test has a low false-positive rate. In a certain testing center, they have found out that for a certain COVID-19 testing, the test is positive `88%` of the time when tested on a patient with the disease (high sensitivity). The test is negative `90%` of the time when tested on a healthy patient (high specificity). Probability of having COVID-19 is `0.25` for the patients come to that testing center.
+
+a. Specify each probability using conditional probability notations
+
+Example: 
+$P(test+|disease)=0.88$\
+$P(test-|healty)=0.9$\
+$P(COVID-19)=0.25$
+
+b. Set the seed. Let's try this example for 1,000,000 simulations.
+```{r}
+# 0.01 probability of having flu ('Yes')
+set.seed(1009)
+```
+
+Let's assume that the patients arrive at this testing center are testing only for the Corona Virus. Simulate 1000000 patients coming to this testing center using `sample()` and specifying the probabilities of the disease. (Name the variable as "disease")
+
+c. Simulate 1000000 tests for these patients. First, generate an empty vector for "test". Then fill in the values 0 and 1 where "disease=0" is the set of patients who does not have the virus and "disease=1" is the set of patients who have the virus. 
+(Hint: use `sample()` function for creating each subsets )
+
+```{r}
+disease <- sample(c('No','Yes'), size=1000000, replace=TRUE,prob=c(0.75,0.25))
+test <- rep(NA, 1000000) # create a dummy variable first
+# test results for people without flu ('No') and with flu ('Yes')
+test[disease=='No'] <- sample(c('Neg','Pos'), size=sum(disease=='No'), replace=TRUE, prob=c(0.9,0.1))
+test[disease=='Yes'] <- sample(c('Neg','Pos'), size=sum(disease=='Yes'), replace=TRUE,prob=c(0.12,0.88))
+```
+
+_Answer the following questions by first calculating by hand and then using the simulations. Compare your results._
+
+d. What is the probability that a test is positive? Remember the formula for conditional probability. $P(A \mid B) = \frac{P(A \cap B)}{P(B)}$
+```{r}
+head(test)
+mean(test=="Pos") # = sum(test=="Pos")/length(test=="Pos")
+```
+
+e. Calculate the probability that a patient has the disease given that the test is positive.
+```{r}
+mean(disease[test=="Pos"]=="Yes") # subset
+```
+
+f. What is the probability that an individual has the disease given that the test is negative?
+```{r}
+mean(disease[test=="Neg"]=="Yes") # subset: test is negative
+```
+
+g. Given someone tested positive for the disease, how many times more likely are they to have the disease than someone from the general population?
+(Hint: First calculate the probability of having the disease given a positive test, then divide by the probability of having the disease.)
+```{r}
+mean(disease[test=="Pos"]=="Yes")/mean(disease=="Yes")
+```
+
+

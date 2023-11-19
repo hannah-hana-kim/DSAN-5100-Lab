@@ -1,0 +1,206 @@
+---
+title: "Lab-8: Assignment"
+author: "Dr. Purna Gamage"
+format:
+  html:
+    embed-resources: true
+---
+
+## Problem-1
+
+_Use R to answer the following questions._
+```{r}
+library(tidyverse)
+```
+
+In a certain large city, 34% of the adult population has a college degree. In a random sample of size  800,
+
+a. What is the exact probability that between 250 and 290 adults have a college degree?
+
+Hint: ( _Exact distribution:_ B(800,.34).) 
+```{r}
+# pbinom: summation of dbinom (discrete -> continuous / continuous !-> discrete)
+x <- pbinom(q = 250.5, size = 800, prob = .34) # prob which is less than 250
+y <- pbinom(q = 290.5, size = 800, prob = .34) #                         290
+
+prob <- y - x
+
+prob
+```
+
+b. What is the approximate normal distribution of the fraction of adults in the sample with a college degree?
+_The fraction is a sample mean. What does the Central Limit Theorem say?_ (Answer (i)-(iii) by hand)
+
+* _for each person in the sample the question "Do you have a college degree?" is like a Bernoulli r.v., B(1,p)._
+
+(i). _What is p?_ 
+
+probability that an adult has a college degree, which is p = .34
+
+(ii). _what are the mean and standard deviation of a single result?_ 
+
+mean = 1 * .34
+
+standard deviation = $\sqrt{\frac{1*0.34*0.66}{800}} = 0.4737$.
+
+```{r}
+# single result = Bernoulli
+mean = 1 * .34
+sd = sqrt(1 * .34 *.66)
+```
+
+(iii). What is the distribution of the sample fraction, that is sample mean?
+
+mean = p = .34
+
+standard deviation = $\sqrt{\frac{1*0.34*0.66}{800}} = 0.4737$. 
+
+
+(iv). What is the probability, if the approximate normal distribution is used? (use R). Compare their result with the exact value.
+```{r}
+# approximate normal distribution = normal distribution
+# pnorm: cumulative
+# rnorm: generating
+# dnorm: discrete
+
+x <- pnorm(250, mean = 800 * .34, sd = sqrt(800 * .34 * .66))
+y <- pnorm(290, mean = 800 * .34, sd = sqrt(800 * .34 * .66))
+prob <- y - x
+prob
+```
+
+* The sample fraction has an approximate normal distribution with mean $p$ and standard deviation $\sqrt{\frac{p(1-p)}{n}}$.
+
+* The sample count (number of adults with college degree in the sample) has an approximate normal distribution with mean $np$ and standard deviation $\sqrt{np(1-p)}$. 
+
+
+
+# Problem-2
+
+Repeat the Same likelihood example(Example 1) done for Poisson distribution in class for an exponential distribution.
+
+a. Write a function to get the likelihood function for data from exponential distribution.
+```{r}
+# find the likelihood function first
+set.seed(30)
+
+mylikeli.exp = function(lambda, x) {
+  (lambda^length(x))*exp(-lambda*sum(x))
+}
+```
+
+b. Generate a random sample of size 5 from an exponential distribution: Let's say the variable named "X.2".
+```{r}
+# get samples
+X.2 <- rexp(n=5)
+```
+
+
+c. Compute the likelihoods(using X.2) for a range of lambda(t) and plot them: Then find for which value the likelihood is maximized?
+```{r}
+# which t has the maximum likelihood
+# t = lambda
+
+t = seq(.01, 8, by = .01)
+Y.2 <- sapply(t,function(t){mylikeli.exp(t,X.2)})
+
+plot(t,Y.2, xlab = 'lambda', ylab = 'likelihood', type = 'l', lwd = 2)
+grid(col = 4)
+
+t[which.max(Y.2)]
+(xbar=mean(X.2))
+```
+
+
+d. Plot the same thing for log likelihood: 
+```{r}
+set.seed(30)
+
+mylikeli.exp_log = function(lambda, x) {
+  length(x)*log(lambda) - lambda*sum(x)
+}
+```
+
+```{r}
+X.3 <- rexp(5)
+Y.3 <- sapply(t,function(t){mylikeli.exp_log(t,X.3)})
+
+plot(t,Y.3, xlab = 'lambda', ylab = 'likelihood', type = 'l', lwd = 2)
+grid(col = 4)
+
+t[which.max(Y.3)]
+(xbar=mean(X.3))
+```
+
+e. Repeat this 10 times
+
+* 10 random samples with the same lambda
+* plot each log-likelihood in the same plot
+* what can you say about log likelihoods according to the plot?  Does it have to do with the sample size we chose?
+
+Likelihood
+
+```{r}
+# likelihood
+X.0 <- matrix(rexp(40,4), nrow = 4)
+likeli.0 <- matrix(NA, nrow = dim(X.0)[2], ncol = length(t))
+
+for (j in 1:ncol(X.0)) {
+  X.2 <- X.0[,j]
+  likeli.0[j,] <- sapply(t,function(t){mylikeli.exp(t,X.2)})
+}
+
+plot(t,likeli.0[1,], xlab = 'lambda', ylab = 'likelihood', type = 'l', lwd = 2, col = 1, ylim = c(0,max(likeli.0)))
+
+for (j in 2:10){
+   lines(t,likeli.0[j,], lwd = 2, col = j)
+}
+
+grid(col = 3)
+```
+
+Log-Likelihood Plot
+
+```{r}
+# log-likelihood
+plot(t,log(likeli.0[1,]), xlab = 'lambda', ylab = 'log-likelihood', type = 'l', lwd = 2, col = 1)
+for (j in 2:10){
+ lines(t,log(likeli.0[j,]), lwd = 2, col = j)
+}
+```
+* what can you say about log likelihoods according to the plot?  Does it have to do with the sample size we chose?
+
+The log likelihood function measures how well the model with a certain parameter value, lambda in this case. According to the log likelihood plot, the model has the best performance when lambda is approximately less than 1. The plot below shows us the log likelihood plot with 5 different samples, and the lambda value slightly differs from the size of samples. The bigger the sample size is, the higher the lambda is. 
+
+```{r}
+mysize = c(5,10,20,40, 80)
+likeli.1 <- matrix(NA, nrow = length(mysize), ncol = length(t))
+for (j in 1:length(mysize)){
+   mysample <- rexp(mysize[j])
+   likeli.1[j,]  <- sapply(t,function(t){mylikeli.exp(t,mysample)})
+}
+
+plot(t,log(likeli.1[1,]), xlab = 'lambda', ylab = 'log-likelihood',
+        type = 'l', lwd = 2, col = 1, ylim = c(-300,0))
+for (j in 2:length(mysize)){
+  lines(t,log(likeli.1[j,]), lwd = 2, col = j)
+}
+```
+
+
+
+# Problem-3: Optional 
+
+`Don't need to submit anything for this one`
+
+Consider the probability distribution with density
+$$
+f(x|\theta) = \begin{cases}
+\theta x^{\theta - 1} \quad (0 \le x \le 1) \\
+0 \quad \text{otherwise}
+\end{cases}
+$$
+where $\theta > 0$ is unknown. 
+
+Find a formula for the method-of-moments estimate for $\theta$.
+

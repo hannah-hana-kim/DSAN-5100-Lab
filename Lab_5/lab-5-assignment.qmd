@@ -1,0 +1,158 @@
+---
+title: "Lab-5: Assignment"
+author: "Dr. Purna Gamage"
+format: 
+  html: 
+    embed-resources: true
+---
+
+## Problem 1:
+
+$X \sim U(0,1)$ and $Y \sim U(0,1)$.
+
+Plot the joint distribution of X & Y such that $X+Y < 1$
+
+`Numerical Example`
+
+$\left(X_1, X_2\right)$ with the range $\left\{\left(x_1, x_2\right) \mid x_1 \geq 0, x_2 \geq 0, x_1+x_2 \leq 1\right\}$ and the joint density function $f\left(x_1, x_2\right)=2$ on this range.
+
+
+a. First make a large number of samples from $X \sim U(0,1)$ and $Y \sim U(0,1)$ and plot X & Y and then plot the samples below the line  $x+y = 1$ .
+```{r}
+library(tidyverse)
+n <- 10000
+X <- runif(n, min=0, max=1)
+Y <- runif(n, min=0, max=1)
+df <- data.frame(X, Y)
+
+df <- df %>% filter(X+Y<1)
+
+plot(X)
+plot(Y)
+plot(df)
+```
+
+b. By looking at the plot, what is the joint p.d.f $f(X,Y)$?
+
+$$
+f(x, y)=\left\{\begin{array}{cc}
+2 & (0<x + y<1) \\
+0 & \text { otherwise }
+\end{array}\right.
+$$
+$f(x,y) = 2$, because 1/0.5.
+
+
+c. Find the marginal distribution of X by hand and making a probability histogram.  Compare whether these are the same. (Hint: think about the limits of X and Y according to $0<X+Y<1$)
+
+Marginal density of $X$ : For $0<x<1$
+
+$$
+f_X(x)=\int_0^1 f_{X Y}(x, y) d y=\int_x^{1-x} 2 d y=2-2 x
+$$
+
+Marginal density of $y$ : For $0<y<1$
+
+$$
+F_Y(y)=\int_0^{1} f_{X Y}(x, y) d x=\int_0^{1-y} 2 dx=2-2y
+$$
+
+```{r}
+hist(df$X, prob = T)
+# abline(a = 2, b = -2, col = 2)
+```
+
+d. Find the marginal distribution of Y by hand and making a probability histogram. Compare whether these are the same. (Hint: think about the limits of X and Y according to $0<X+Y<1$)
+```{r}
+hist(df$Y, prob = T)
+# abline(a = 2, b = -2, col = 2) 
+```
+
+## Problem 2: Joint distributions and Conditional Expectations. 
+
+A CDF is defined by 
+
+$$
+\begin{aligned}
+F(x,y) &= \begin{cases} Cx^2y(x+y^2) \quad (0 \leq y \leq 3, 0 \leq x \leq 2)\\
+0 \quad (otherwise) 
+\end{cases}
+\end{aligned}
+$$
+
+Please refer to the images for more detailed description. 
+
+a. Find the joint probability density function.
+![Problem-2_a](./image/a.png)
+joint probability density function:
+
+$$
+\frac{d}{dy}{\frac{d}{dx}(Cx^3y + Cx^2y^3)}
+= \frac{d}{dy}(3Cx^2y + 2Cxy^3) \\
+= 3Cx^2 + 6Cxy^2
+$$
+
+b. Find the value of $C$.
+![Problem-2_b](./image/b.png)
+getting the C using pdf:
+
+$$
+\int_{0}^{3} \int_{0}^{2} (3Cx^2 + 6Cxy^2) \, dx \, dy
+\\ = \int_{0}^{3} C(2-0)^3 + 3C(2-0)^2y^2 \, dy \\
+\\= \int_{0}^{3} 8C + 12Cy^2 \, dy \\
+\\= 24C + 108C \\
+\\= 1 
+\\
+\\
+\therefore C = \frac{1}{132}
+$$
+
+
+c. Find the Marginal density of $X$
+![Problem-2_c](./image/c.png)
+$$
+\int_{0}^{3} 3Cx^2 + 6Cxy^2 \, dy \\
+= 9Cx^2 + 54Cx \\ 
+= \frac{9}{132}x^2 + \frac{54}{132}x \\
+\therefore \frac{3}{44}x^2 + \frac{9}{22}x
+$$
+
+d. Find the Conditional expectation $E(Y|X)$
+![Problem-2_d](./image/d.png)
+$$
+E(Y|X) = \frac{f(x,y)}{f_X(x)}\times y
+\\
+\\
+\frac{3Cx^2 + 6Cxy^2}{9Cx^2 + 54Cx}\times y \\
+= \frac{(x+2y^2)\times y}{3(x+6)} \\
+= \frac{xy + 2y^3}{3x+18}
+$$
+
+e. Find the probability $Pr(X\leq Y)$
+![Problem-2_e](./image/e.png)
+$$
+\int_{0}^{2} \int_{x}^{3} f(x,y) \, dy \, dx \\
+= \int_{0}^{2} \int_{x}^{3} (3Cx^2 + 6Cxy^2) \, dy \, dx \\
+= \int_{0}^{2} (3Cx^2(3-x) + 2Cx(27-x^3)) \, dx \\
+= \int_{a}^{b} (9Cx^2 - 3Cx^3 + 54Cx - 2Cx^4) \, dx \\ 
+= 24C - 12C + 108C - \frac{64}{5}C \\
+= \frac{586}{5}\times\frac{1}{132} \\
+\approx 0.887878
+$$
+
+## Problem 3: Optional (don't need to submit)
+
+Let $Y \sim N(0,1)$ have a standard normal distribution. Set $X=\lfloor Y\rfloor$ (floor function).
+
+- Find median $(Y \mid X=x)$ from simulations and plot it as a function of $x$.
+- 
+- Find $s d(Y \mid X=x)$ from simulations and plot it as a function of $x$.
+
+a. Do this with a data frame. Two columns, one for  X  and one for  Y. use _floor()_ function.
+
+    _floor function:_ <https://en.wikipedia.org/wiki/Floor_and_ceiling_functions>
+
+b. Find the median $Y|X$ and plot. (You can use the _aggregate()_ function.). Comment.
+
+c. Find the standard deviation of $Y|X$ and plot. (You can use the _aggregate()_ function.). Comment.
+
